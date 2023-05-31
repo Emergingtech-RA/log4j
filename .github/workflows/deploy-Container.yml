@@ -1,0 +1,134 @@
+name: docker_build_push_acr
+ 
+on:
+  push:
+    branches: [ "development" , "master" ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ "master" ]
+ 
+jobs:
+  security:
+    name: SCA & SAST
+    runs-on: ${{ matrix.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
+    permissions:
+      actions: write
+      contents: write
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript' ]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{ matrix.language }}"
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.organization=emergingtech-ra-org
+            -Dsonar.projectKey=log4j-demo
+  trivyscan:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    runs-on: ubuntu-latest
+    needs: security
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build a Docker image
+      run: docker build -t demojuiceshopacr.azurecr.io/log4j-demo .
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+      with:
+          image-ref: 'demojuiceshopacr.azurecr.io/log4j-demo:latest'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,INFO'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+          sarif_file: 'trivy-results.sarif'
+          
+  build:
+      name: Push Image to ACR
+      runs-on: ubuntu-latest
+      needs: trivyscan
+
+      steps:
+        - uses: actions/checkout@v2
+
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v2
+
+        - name: Log in to container registry
+          uses: docker/login-action@v2
+          with:
+            registry: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+            username: ${{ secrets.REGISTRY_USERNAME }}
+            password: ${{ secrets.REGISTRY_PASSWORD }}
+
+        - name: Build and push container image to registry
+          uses: docker/build-push-action@v3
+          with:
+            context: .
+            push: true
+            tags: demojuiceshopacr.azurecr.io/log4j-demo
+            file: ./Dockerfile
+
+  deploy-to-stg:
+    name: Deploy Container to Staging environment   
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'stg'
+      url: 'https://demo-log4j-stg.azurewebsites.net/'
+    steps:
+          - name: Deploy to Azure Web App
+            id: deploy-to-webapp
+            uses: azure/webapps-deploy@v2
+            with:
+              app-name: 'demo-log4j'
+              slot-name: 'stg'
+              publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_STG}}
+              images: 'demojuiceshopacr.azurecr.io/log4j-demo'
+  deploy-to-prod:
+        name: Deploy Container to Production environment  
+        runs-on: ubuntu-latest
+        needs: deploy-to-stg
+        environment:
+          name: 'production'
+          url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+        steps:
+          - name: Deploy to Azure Web App
+            id: deploy-to-webapp
+            uses: azure/webapps-deploy@v2
+            with:
+              app-name: 'demo-log4j'
+              slot-name: 'production'
+              publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD}}
+              images: 'demojuiceshopacr.azurecr.io/log4j-demo'
