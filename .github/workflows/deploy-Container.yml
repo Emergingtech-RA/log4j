@@ -95,7 +95,7 @@ jobs:
         - name: Build and push container image to registry
           uses: docker/build-push-action@v3
           with:
-            context: .
+            context: ./
             push: true
             tags: demojuiceshopacr.azurecr.io/log4j-demo
             file: ./Dockerfile
