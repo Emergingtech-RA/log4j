@@ -97,22 +97,19 @@ jobs:
             docker build -t demojuiceshopacr.azurecr.io/log4j-demo . 
             docker push demojuiceshopacr.azurecr.io/log4j-demo
           
-  login-to-azure:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-        - name: Login to Azure
-          uses: azure/login@v1
-          with:
-            creds: ${{secrets.AZURE_CREDENTIALS}} 
+
   deploy-to-stg:
     name: Deploy Container to Staging environment   
     runs-on: ubuntu-latest
-    needs: [build, login-to-azure]
+    needs: build
     environment:
       name: 'stg'
       url: 'https://demo-log4j-stg.azurewebsites.net/'
     steps:
+          - name: Login to Azure
+            uses: azure/login@v1
+            with:
+                creds: ${{secrets.AZURE_CREDENTIALS}} 
           - name: Deploy to Azure Web App
             id: deploy-to-webapp
             uses: azure/webapps-deploy@v2
