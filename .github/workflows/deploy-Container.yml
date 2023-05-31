@@ -91,14 +91,17 @@ jobs:
             registry: ${{ secrets.REGISTRY_LOGIN_SERVER }}
             username: ${{ secrets.REGISTRY_USERNAME }}
             password: ${{ secrets.REGISTRY_PASSWORD }}
-
-        - name: Build and push container image to registry
-          uses: docker/build-push-action@v3
-          with:
-            context: .
-            push: true
-            tags: demojuiceshopacr.azurecr.io/log4j-demo
-            file: ./Dockerfile
+    
+        - name: Build the Docker image
+          run: |
+            docker build -t demojuiceshopacr.azurecr.io/log4j-demo . 
+            docker push demojuiceshopacr.azurecr.io/log4j-demo
+          
+#           with:
+#             context: .
+#             push: true
+#             tags: demojuiceshopacr.azurecr.io/log4j-demo
+#             file: ./Dockerfile
 
   deploy-to-stg:
     name: Deploy Container to Staging environment   
