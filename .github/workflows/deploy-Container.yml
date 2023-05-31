@@ -98,7 +98,7 @@ jobs:
             context: .
             push: true
             tags: demojuiceshopacr.azurecr.io/log4j-demo
-            file: ./Dockerfile
+            file: Dockerfile
 
   deploy-to-stg:
     name: Deploy Container to Staging environment   
