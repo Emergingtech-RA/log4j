@@ -91,12 +91,14 @@ jobs:
             registry: ${{ secrets.REGISTRY_LOGIN_SERVER }}
             username: ${{ secrets.REGISTRY_USERNAME }}
             password: ${{ secrets.REGISTRY_PASSWORD }}
-    
-        - name: Build the Docker image
-          run: |
-            docker build -t demojuiceshopacr.azurecr.io/log4j-demo . 
-            docker push demojuiceshopacr.azurecr.io/log4j-demo
-          
+
+        - name: Build and push container image to registry
+          uses: docker/build-push-action@v3
+          with:
+            context: ./
+            push: true
+            tags: demojuiceshopacr.azurecr.io/log4j-demo
+            file: ./Dockerfile
 
   deploy-to-stg:
     name: Deploy Container to Staging environment   
@@ -106,10 +108,6 @@ jobs:
       name: 'stg'
       url: 'https://demo-log4j-stg.azurewebsites.net/'
     steps:
-          - name: Login to Azure
-            uses: azure/login@v1
-            with:
-                creds: ${{secrets.AZURE_CREDENTIALS}} 
           - name: Deploy to Azure Web App
             id: deploy-to-webapp
             uses: azure/webapps-deploy@v2
@@ -118,22 +116,6 @@ jobs:
               slot-name: 'stg'
               publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_STG}}
               images: 'demojuiceshopacr.azurecr.io/log4j-demo'
-              
-  assess-policy-compliance:    
-      runs-on: ubuntu-latest
-      needs: deploy-to-stg
-      steps:
-      # Azure Login       
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{secrets.AZURE_CREDENTIALS}} 
-
-      - name: Check for resource compliance
-        uses: azure/policy-compliance-scan@v0
-        with:
-          scopes: |
-            /subscriptions/${{secrets.AZURE_SUBSCRIPTION}}/resourceGroups/demo-app/providers/Microsoft.Web/sites/demo-log4j           
   deploy-to-prod:
         name: Deploy Container to Production environment  
         runs-on: ubuntu-latest
@@ -143,15 +125,11 @@ jobs:
           url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
         steps:
-           - name: Login to Azure
-             uses: azure/login@v1
-             with:
-                 creds: ${{secrets.AZURE_CREDENTIALS}}
-           - name: Deploy to Azure Web App
-             id: deploy-to-webapp
-             uses: azure/webapps-deploy@v2
-             with:
-               app-name: 'demo-log4j'
-               slot-name: 'production'
-               publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD}}
-               images: 'demojuiceshopacr.azurecr.io/log4j-demo'
+          - name: Deploy to Azure Web App
+            id: deploy-to-webapp
+            uses: azure/webapps-deploy@v2
+            with:
+              app-name: 'demo-log4j'
+              slot-name: 'production'
+              publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD}}
+              images: 'demojuiceshopacr.azurecr.io/log4j-demo'
