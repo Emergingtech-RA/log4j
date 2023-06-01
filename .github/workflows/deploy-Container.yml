@@ -133,7 +133,8 @@ jobs:
           docker_name: 'owasp/zap2docker-stable'
           target: 'https://demo-log4j-stg.azurewebsites.net/'
           cmd_options: '-a'       
-  assess-policy-compliance:    
+  assess-policy-compliance:  
+      name: Infra_compliance_check
       runs-on: ubuntu-latest
       needs: zap_scan_DAST
       steps:
