@@ -1,2 +1,0 @@
-AccessKey: AKIAR6RW4DLQUXH2NVWE
-SecretKey: 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
