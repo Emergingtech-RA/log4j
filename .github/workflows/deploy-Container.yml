@@ -117,7 +117,7 @@ jobs:
               app-name: 'demo-wrkshp'
               slot-name: 'stg'
               publish-profile: ${{ secrets.AzureAppService_PublishProfile_d8b55555ddf64dc4a3239668d87c3bd5 }}
-              images: 'demowrksp.azurecr.io/log4j-demo'
+              images: 'demowrksp.azurecr.io/log4j-demo:latest'
   zap_scan_DAST:
     runs-on: ubuntu-latest
     needs: deploy-to-stg
@@ -170,4 +170,4 @@ jobs:
               app-name: 'demo-wrkshp'
               slot-name: 'production'
               publish-profile: ${{secrets.AzureAppService_PublishProfile_90165db82cce4d0cbbf74b314119bd4d}}
-              images: 'demowrksp.azurecr.io/log4j-demo'
+              images: 'demowrksp.azurecr.io/log4j-demo:latest'
