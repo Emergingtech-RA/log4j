@@ -148,7 +148,7 @@ jobs:
   deploy-to-prod:
         name: Deploy Container to Production environment  
         runs-on: ubuntu-latest
-        needs: deploy-to-stg
+        needs: [zap_scan_DAST, deploy-to-stg]
         environment:
           name: 'production'
           url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
