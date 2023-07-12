@@ -59,11 +59,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build a Docker image
-      run: docker build -t demojuiceshopacr.azurecr.io/log4j-demo .
+      run: docker build -t demowrksp.azurecr.io/log4j-demo .
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
       with:
-          image-ref: 'demojuiceshopacr.azurecr.io/log4j-demo:latest'
+          image-ref: 'demowrksp.azurecr.io/log4j-demo:latest'
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
@@ -97,7 +97,7 @@ jobs:
           with:
             context: ./
             push: true
-            tags: demojuiceshopacr.azurecr.io/log4j-demo
+            tags: demowrksp.azurecr.io/log4j-demo
             file: ./Dockerfile
 
   deploy-to-stg:
@@ -106,7 +106,7 @@ jobs:
     needs: build
     environment:
       name: 'stg'
-      url: 'https://demo-log4j-stg.azurewebsites.net/'
+      url: 'https://demo-wrkshp-stg.azurewebsites.net/'
     steps:
           - name: Deploy to Azure Web App
             id: deploy-to-webapp
@@ -114,8 +114,8 @@ jobs:
             with:
               app-name: 'demo-log4j'
               slot-name: 'stg'
-              publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_STG}}
-              images: 'demojuiceshopacr.azurecr.io/log4j-demo'
+              publish-profile: ${{ secrets.AzureAppService_PublishProfile_d8b55555ddf64dc4a3239668d87c3bd5 }}
+              images: 'demowrksp.azurecr.io/log4j-demo'
   deploy-to-prod:
         name: Deploy Container to Production environment  
         runs-on: ubuntu-latest
@@ -131,5 +131,5 @@ jobs:
             with:
               app-name: 'demo-log4j'
               slot-name: 'production'
-              publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_PROD}}
-              images: 'demojuiceshopacr.azurecr.io/log4j-demo'
+              publish-profile: ${{secrets.AzureAppService_PublishProfile_90165db82cce4d0cbbf74b314119bd4d}}
+              images: 'demowrksp.azurecr.io/log4j-demo'
