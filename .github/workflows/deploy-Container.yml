@@ -59,11 +59,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build a Docker image
-      run: docker build -t demojuiceshopacr.azurecr.io/log4j-demo .
+      run: docker build -t demowrksp.azurecr.io/log4j-demo .
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
       with:
-          image-ref: 'demojuiceshopacr.azurecr.io/log4j-demo:latest'
+          image-ref: 'demowrksp.azurecr.io/log4j-demo:latest'
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
@@ -94,8 +94,8 @@ jobs:
 
         - name: Build the Docker image
           run: |
-            docker build -t demojuiceshopacr.azurecr.io/log4j-demo . 
-            docker push demojuiceshopacr.azurecr.io/log4j-demo
+            docker build -t demowrksp.azurecr.io/log4j-demo . 
+            docker push demowrksp.azurecr.io/log4j-demo
 
   deploy-to-stg:
     name: Deploy Container to Staging environment   
